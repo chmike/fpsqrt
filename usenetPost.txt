@@ -1,0 +1,138 @@
+Newsgroups: comp.lang.c
+Path: sparky!uunet!ferkel.ucsb.edu!taco!gatech!rpi!ghost.dsi.unimi.it!univ-lyon1.fr!scsing.switch.ch!dxcern!marmac2.in2p3.fr!user
+From: Meessen@marvax.IN2P3.fr (Meessen Christophe)
+Subject: Fixed point sqrt
+Message-ID: <Meessen-280193094030@marmac2.in2p3.fr>
+Followup-To: comp.lang.c
+Sender: n...@dxcern.cern.ch (USENET News System)
+Organization: Centre de Physique des Particules de Marseille
+Date: Thu, 28 Jan 1993 08:35:23 GMT
+Lines: 127
+
+In article <VJ.93Jan19115...@dlsi.dl.ac.uk>, v...@gserv1.dl.ac.uk (Dave
+Hines) wrote:
+> 
+> > Well? Does anyone know of a quick and dirty way to get a reasonably accurate
+> > square root of a fixed point integer number?
+> 
+> Hmmm - I have a long integer square root routine. 
+
+Dave Hines proposed a sqrt function receiving an unsigned long (X) and
+returning
+an unsigned long. The remainder, an unsigned long, is accessible as
+'result2'.
+The algorithm uses 4 unsigned long variables. 
+Thus it's a long -> long function.
+
+
+I suggest two algorithms using the same variables. The first one will
+compute a sqrt of a long, returning a fixed point value. The second will
+compute the sqrt of a fixed point value, returning a fixed point value.
+Thus it's a long -> fixed or fixed -> fixed function.
+
+We will suppose a fixed is equivalent to a long, and longs are 32 bits
+wide.
+
+/*
+ * fixed sqrtL2F( long X );
+ *
+ * Long to fixed point square roots. 
+ * RETURNS the fixed point square root of X (long).
+ * REQUIRES X is positive.
+ *
+ * Christophe MEESSEN, 1993.
+ */
+
+fixed sqrtL2F( long X ) {
+
+  unsigned long t, q, b, r;
+
+  r = X;
+  b = 0x40000000;
+  q = 0;
+
+  while( b > 0 ) {
+    t = q + b;
+    if( r >= t ) {
+      r = r - t;
+      q = t + b;
+    }
+    r = r * 2;     /* shift left  1 bit */
+    b = b / 2;     /* shift right 1 bit */
+  }
+  if( r >= q )
+    q = q + 1;
+
+  return( q );
+}
+
+
+/*
+ * fixed sqrtF2F( fixed X );
+ *
+ * Fixed to fixed point square roots. 
+ * RETURNS the fixed point square root of X (fixed).
+ * REQUIRES X is positive.
+ *
+ * Christophe MEESSEN, 1993.
+ */
+
+fixed sqrtF2F ( fixed X ) {
+
+  unsigned long t, q, b, r;
+
+  r = X;
+  b = 0x40000000;
+  q = 0;
+
+  while( b >= 256 ) {
+    t = q + b;
+    if( r >= t ) {
+      r = r - t;
+      q = t + b;
+    }
+    r = r * 2;     /* shift left  1 bit */
+    b = b / 2;     /* shift right 1 bit */
+  }
+  q = q / 256;     /* shift right 8 bits */
+
+  return( q );
+}
+
+for memory I just rewrote the long to long sqrt function.
+
+/*
+ * long sqrtL2L( long X );
+ *
+ * Long to long point square roots. 
+ * RETURNS the integer square root of X (long).
+ * REMAINDER is in the local variable r of type long on return.  
+ * REQUIRES X is positive.
+ *
+ * Christophe MEESSEN, 1993.
+ */
+
+long sqrtL2L( long X ) {
+
+  unsigned long t, q, b, r;
+
+  r = X;
+  b = 0x40000000;
+  q = 0;
+
+  while( b >= 256 ) {
+    t = q + b;
+    q = q / 2;     /* shift right 1 bit */
+    if( r >= t ) {
+      r = r - t;
+      q = q + b;
+    }
+    b = b / 4;     /* shift right 2 bits */
+  }
+
+  return( q );
+}
+
+This functions have been tested. But I'll be pleased to receive any
+comments.
+Please respond through mail: Mees...@marvax.in2p3.fr
