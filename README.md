@@ -1,7 +1,7 @@
 Fixed point square root function
 --------------------------------
 
-Computing the square root of an integer or a fixed point into a fixed point integer. A fixed point is a 32 bit value with the comma between the bits 15 and 16, where bit 0 is the less significant bit of the value. 
+Computing the square root of an integer or a fixed point into a fixed point integer. A fixed point is a 32 bit value with the comma between the bits 15 and 16, where bit 0 is the least significant bit of the value. 
   
 The algorithms can be easily extended to 64bit integers, or different fixed point comma positions. 
  
