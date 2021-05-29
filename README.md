@@ -14,6 +14,7 @@ shifts.
 When 64bit registers and operations are available, one can produce the same
 result by simply using the 64bit integer square root as shown below:
 
+```c
 fx16_16_t sqrt_i32_to_fx16_16(int32_t v) {
     return (fx16_16)sqrt_i64((int64_t)v << 32);
 }
@@ -21,11 +22,13 @@ fx16_16_t sqrt_i32_to_fx16_16(int32_t v) {
 fx16_16_t sqrt_fx16_16_to_fx16_16(fx16_16_t v) {
     return (fx16_16_t)sqrt_i64((int64_t)v << 16);
 }
+```
 
 We can thus compute the square root of a fixed point with any number of
 fractional bits. Below are examples for fixed point with 6 bit fractional
 part.
 
+```c
 fx26_6 sqrt_i32_to_fx26_6(int32_t v) {
     return (fx26_6)sqrt_i64((int64_t)v << 12);
 }
@@ -33,6 +36,7 @@ fx26_6 sqrt_i32_to_fx26_6(int32_t v) {
 fx26_6 sqrt_fx26_6_to_fx26_6(fx26_6 v) {
     return (fx26_6)sqrt_i64((int64_t)v << 6);
 }
+```
 
 The main.c test the functions over a big range of values. To compile and 
 run it, use the command `gcc *.c -lm -o fpsqrt && ./fpsqrt`. 
