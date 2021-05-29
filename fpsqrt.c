@@ -4,29 +4,35 @@
 
 /*
   Computing the square root of an integer or a fixed point integer into a 
-  fixed point integer. A fixed point is a 32 bit value with the comma between
-  the bits 15 and 16, where bit 0 is the less significant bit of the value. 
-  
-  The algorithms can be easily extended to 64bit integers, or different 
-  fixed point comma positions. 
+  fixed point integer. A fixed point is a 32 bit value with the decimal point
+  between the bits 15 and 16, where bit 0 is the less significant bit of the value. 
 
-  The algorithm uses the property that computing x² is trivial compared to the
-  sqrt. It will thus search the biggest x so that x² <= v, assuming we compute
-  sqrt(v).  
-    
-  The algorithm tests each bit of x starting with the most significant toward
-  the less significant. It tests if the bit must be set or not. 
-  
-  The algorithm uses the relation (x + a)² = x² + 2ax + a² to add the bit
-  efficiently. Instead of computing x² it keeps track of (x + a)² - x².
-  
-  When computing sqrt(v), r = v - x², q = 2ax, b = a² and t = 2ax + a2. 
+  The functions sqrt_i32_to_fx16_16 and sqrt_fx16_16_to_fx16_16 compute the 
+  square root by using only 32 bit registers, addition, subtraction and
+  shifts. 
 
-  Note that the input integers are signed and that the sign bit is used in 
-  the computation. To accept unsigned integer as input, unfolding the initial
-  loop is required to handle this particular case. See the usenet discussion
-  for the proposed solution. 
-  
+  When 64bit registers and operations are available, one can produce the same
+  result by simply using the 64bit integer square root as shown below:
+
+  fx16_16_t sqrt_i32_to_fx16_16(int32_t v) {
+      return (fx16_16_t)sqrt_i64((int64_t)v << 32);
+  }
+
+  fx16_16_t sqrt_fx16_16_to_fx16_16(fx16_16_t v) {
+      return (fx16_16_t)sqrt_i64((int64_t)v << 16);
+  }
+
+  We can thus compute the square root of a fixed point with any number of
+  fractional bits. Below are examples for fixed point with 6 bit fractional
+  part.
+
+  fx26_6_t sqrt_i32_to_fx26_6(int32_t v) {
+      return (fx26_6_t)sqrt_i64((int64_t)v << 12);
+  }
+
+  fx26_6_t sqrt_fx26_6_to_fx26_6(fx26_6_t v) {
+      return (fx26_6_t)sqrt_i64((int64_t)v << 6);
+  }
  
   Algorithm and code Author Christophe Meessen 1993. 
   Initially published in usenet comp.lang.c, Thu, 28 Jan 1993 08:35:23 GMT, 
@@ -39,50 +45,49 @@
 */
 
 
-/*
- * int32_t sqrtI2I( int32_t v );
- *
- * Compute int32_t to int32_t square root
- * RETURNS the integer square root of v
- * REQUIRES v is positive
- */
-int32_t sqrtI2I( int32_t v )
-{
-    uint32_t t, q, b, r;
-    r = v;           // r = v - x²
-    b = 0x40000000;  // a²
-    q = 0;           // 2ax
-    while( b > 0 )
-    {
-        t = q + b;   // t = 2ax + a²
-        q >>= 1;     // if a' = a/2, then q' = q/2
-        if( r >= t ) // if (v - x²) >= 2ax + a²
-        {
-            r -= t;  // r' = (v - x²) - (2ax + a²)
-            q += b;  // if x' = (x + a) then ax' = ax + a², thus q' = q' + b
+
+// sqrt_i32 computes the squrare root of a 32bit integer and returns
+// a 32bit integer value. It requires that v is positive.
+int32_t sqrt_i32(int32_t v) {
+    uint32_t b = 1<<30, q = 0, r = v;
+    while (b > r)
+        b >>= 2;
+    while( b > 0 ) {
+        uint32_t t = q + b;
+        q >>= 1;           
+        if( r >= t ) {     
+            r -= t;        
+            q += b;        
         }
-        b >>= 2;     // if a' = a/2, then b' = b / 4
+        b >>= 2;
     }
     return q;
 }
 
+// sqrt_i64 computes the squrare root of a 64bit integer and returns
+// a 64bit integer value. It requires that v is positive.
+int64_t sqrt_i64(int64_t v) {
+    uint64_t b = ((uint64_t)1)<<62, q = 0, r = v;
+    while (b > r)
+        b >>= 2;
+    while( b > 0 ) {
+        uint64_t t = q + b;
+        q >>= 1;           
+        if( r >= t ) {     
+            r -= t;        
+            q += b;        
+        }
+        b >>= 2;
+    }
+    return q;
+}
 
-/*
- * fixed sqrtI2F( long v );
- *
- * Compute int32_t to fixed square root
- * RETURNS the fixed point square root of v
- * REQUIRES v is positive
- *          The less significant bit may be inaccurate for some values bigger
- *          than 57 millions because of computation overflow and rounding error
- *
- * Shifts comma one bit left at each iteration. Last instruction adjusts
- * rounding approximation in last bit. 
- */
-fixed sqrtI2F( int32_t v )
-{
+// sqrt_i32_to_fx16_16 computes the squrare root of a 32bit integer and returns
+// a fixed point value with 16bit fractional part. It requires that v is positive.
+// The computation use only 32 bit registers and simple operations.
+fx16_16_t sqrt_i32_to_fx16_16(int32_t v) {
     uint32_t t, q, b, r;
-    if( !v ) return 0;
+    if (v == 0) return 0;
     r = v;
     b = 0x40000000;
     q = 0;
@@ -92,27 +97,22 @@ fixed sqrtI2F( int32_t v )
         if( r >= t )
         {
             r -= t;
-            q = t + b; // equivalent to q += 2*b
+            q = t + b;
         }
         r <<= 1;
         b >>= 1;
     }
-    if( r >= q ) ++q;
+    if( r > q ) ++q;
     return q;
 }
 
-
-/*
- * fixed sqrtF2F( fixed v );
- *
- * Compute fixed to fixed square root
- * RETURNS the fixed point square root of v (fixed)
- * REQUIRES v is positive
- */
-fixed sqrtF2F ( fixed x )
-{
+// sqrt_fx16_16_to_fx16_16 computes the squrare root of a fixed point with 16 bit
+// fractional part and returns a fixed point with 16 bit fractional part. It 
+// requires that v is positive. The computation use only 32 bit registers and 
+// simple operations.
+fx16_16_t sqrt_fx16_16_to_fx16_16(fx16_16_t v) {
     uint32_t t, q, b, r;
-    r = x;
+    r = v;
     b = 0x40000000;
     q = 0;
     while( b > 0x40 )
