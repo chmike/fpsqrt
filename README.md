@@ -5,9 +5,9 @@ Computing the square root of an integer or a fixed point integer into a
 fixed point integer. A fixed point is a 32 bit value with the decimal point
 between the bits 15 and 16, where bit 0 is the less significant bit of the value.
 
-The functions sqrt_i32 and sqrt_i64 compute a simple integer square root.
+The functions `sqrt_i32` and `sqrt_i64` compute a simple integer square root.
 
-The functions sqrt_i32_to_fx16_16 and sqrt_fx16_16_to_fx16_16 compute the 
+The functions `sqrt_i32_to_fx16_16` and `sqrt_fx16_16_to_fx16_16` compute the 
 square root by using only 32 bit registers, addition, subtraction and
 shifts. 
 
@@ -41,5 +41,6 @@ run it, use the command `gcc *.c -lm -o fpsqrt && ./fpsqrt`. 
 *Initially published in*: usenet comp.lang.c, Thu, 28 Jan 1993 08:35:23 GMT, \
 *Subject*: Fixed point sqrt \
 *by*: Meessen Christophe\
-*Ref*: [usenet post](https://groups.google.com/forum/?hl=fr%05aacf5997b615c37&fromgroups#!topic/comp.lang.c/IpwKbw0MAxw/discussion)\
-*Update*: May 21, 2021\
+*Ref*: [usenet post](https://groups.google.com/forum/?hl=fr%05aacf5997b615c37&fromgroups#!topic/comp.lang.c/IpwKbw0MAxw/discussion)
+
+Last update : May 21, 2021
