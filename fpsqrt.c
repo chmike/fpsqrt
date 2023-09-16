@@ -112,9 +112,25 @@ fx16_16_t sqrt_i32_to_fx16_16(int32_t v) {
 // simple operations.
 fx16_16_t sqrt_fx16_16_to_fx16_16(fx16_16_t v) {
     uint32_t t, q, b, r;
-    r = v;
-    b = 0x40000000;
-    q = 0;
+    r = (int32_t)v; 
+    q = 0;          
+    b = 0x40000000UL;
+    if( r < 0x40000200 )
+    {
+        while( b != 0x40 )
+        {
+            t = q + b;
+            if( r >= t )
+            {
+                r -= t;
+                q = t + b; // equivalent to q += 2*b
+            }
+            r <<= 1;
+            b >>= 1;
+        }
+        q >>= 8;
+        return q;
+    }
     while( b > 0x40 )
     {
         t = q + b;
@@ -123,11 +139,29 @@ fx16_16_t sqrt_fx16_16_to_fx16_16(fx16_16_t v) {
             r -= t;
             q = t + b; // equivalent to q += 2*b
         }
+        if( (r & 0x80000000) != 0 )
+        {
+            q >>= 1;
+            b >>= 1;
+            r >>= 1;
+            while( b > 0x20 )
+            {
+                t = q + b;
+                if( r >= t )
+                {
+                    r -= t;
+                    q = t + b;
+                }
+                r <<= 1;
+                b >>= 1;
+            }
+            q >>= 7;
+            return q;
+        }
         r <<= 1;
         b >>= 1;
     }
     q >>= 8;
     return q;
 }
-
 

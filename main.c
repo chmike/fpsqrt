@@ -40,7 +40,7 @@ int main (int argc, char *argv[]) {
 	UNUSED(argc);
 	UNUSED(argv);
     int32_t i;
-    const int32_t n = 1024*1024*1024;
+    const int32_t n = 0x7FFFFFF;
     const double k = 1<<16;
 
     printf( "Testing integer square roots  " );

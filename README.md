@@ -1,6 +1,9 @@
 Fixed point square root function
 --------------------------------
 
+**check the note at the end of this README**
+
+
 Computing the square root of an integer or a fixed point integer into a 
 fixed point integer. A fixed point is a 32 bit value with the decimal point
 between the bits 15 and 16, where bit 0 is the less significant bit of the value.
@@ -48,3 +51,10 @@ run it, use the command `gcc *.c -lm -o fpsqrt && ./fpsqrt`. 
 *Ref*: [usenet post](https://groups.google.com/forum/?hl=fr%05aacf5997b615c37&fromgroups#!topic/comp.lang.c/IpwKbw0MAxw/discussion)
 
 Last update : May 21, 2021
+
+## Note Sep 16, 2023
+
+The github user *apodtele* found a bug with the `sqrt_fx16_16_to_fx16_16()` function. 
+An overflow occurs when the input value is bigger or equal to 0x40000200.
+The bug is now fixed with a slight performance penalty. 
+
