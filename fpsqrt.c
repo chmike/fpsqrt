@@ -107,31 +107,14 @@ fx16_16_t sqrt_i32_to_fx16_16(int32_t v) {
 }
 
 // sqrt_fx16_16_to_fx16_16 computes the squrare root of a fixed point with 16 bit
-// fractional part and returns a fixed point with 16 bit fractional part. It 
-// requires that v is positive. The computation use only 32 bit registers and 
-// simple operations.
+// fractional part and returns a rounded fixed point with 16 bit fractional part.
+// The argument can be unsigned 32-bit value.
 fx16_16_t sqrt_fx16_16_to_fx16_16(fx16_16_t v) {
     uint32_t t, q, b, r;
-    r = (int32_t)v; 
-    q = 0;          
-    b = 0x40000000UL;
-    if( r < 0x40000200 )
-    {
-        while( b != 0x40 )
-        {
-            t = q + b;
-            if( r >= t )
-            {
-                r -= t;
-                q = t + b; // equivalent to q += 2*b
-            }
-            r <<= 1;
-            b >>= 1;
-        }
-        q >>= 8;
-        return q;
-    }
-    while( b > 0x40 )
+    r = (uint32_t)v >> 1;
+    q = ( v & 1 ) << 15;
+    b = 0x20000000;
+    do
     {
         t = q + b;
         if( r >= t )
@@ -139,29 +122,10 @@ fx16_16_t sqrt_fx16_16_to_fx16_16(fx16_16_t v) {
             r -= t;
             q = t + b; // equivalent to q += 2*b
         }
-        if( (r & 0x80000000) != 0 )
-        {
-            q >>= 1;
-            b >>= 1;
-            r >>= 1;
-            while( b > 0x20 )
-            {
-                t = q + b;
-                if( r >= t )
-                {
-                    r -= t;
-                    q = t + b;
-                }
-                r <<= 1;
-                b >>= 1;
-            }
-            q >>= 7;
-            return q;
-        }
-        r <<= 1;
         b >>= 1;
+        r <<= 1;
     }
-    q >>= 8;
-    return q;
+    while( b > 0x10 );
+    return ( q + 0x40 ) >> 7;
 }
 
